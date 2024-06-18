@@ -1,6 +1,6 @@
 package com.nettakrim.spyglass_astronomy.mixin;
 
-import com.llamalad7.mixinextras.injector.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.nettakrim.spyglass_astronomy.SpyglassAstronomyClient;
 
 import net.minecraft.client.Mouse;
@@ -46,10 +46,9 @@ public class MouseMixin {
         method = "updateMouse",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/tutorial/TutorialManager;onUpdateMouse(DD)V",
-            ordinal = 0
+            target = "Lnet/minecraft/client/tutorial/TutorialManager;onUpdateMouse(DD)V"
         ),
-        ordinal = 2
+        ordinal = 1
     )
     private double changeXSensitivity(double d) {
         ClientPlayerEntity player = SpyglassAstronomyClient.client.player;
@@ -71,10 +70,9 @@ public class MouseMixin {
         method = "updateMouse",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/tutorial/TutorialManager;onUpdateMouse(DD)V",
-            ordinal = 0
+            target = "Lnet/minecraft/client/tutorial/TutorialManager;onUpdateMouse(DD)V"
         ),
-        ordinal = 3
+        ordinal = 2
     )
     private double changeYSensitivity(double d) {
         return d * sensitivityScale;

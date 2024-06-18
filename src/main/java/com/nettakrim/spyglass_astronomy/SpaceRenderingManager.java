@@ -9,7 +9,6 @@ import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.render.VertexFormat;
 
 import net.minecraft.client.render.BackgroundRenderer;
-import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
@@ -200,8 +199,8 @@ public class SpaceRenderingManager {
         drawingConstellationsBuffer.upload(drawingConstellationsBufferBuilder.end());
     }
 
-    public void Render(MatrixStack matrices, Matrix4f projectionMatrix, float tickDelta, Camera camera, boolean bl, Runnable runnable) {
-        starVisibility = starsAlwaysVisible ? 1 : SpyglassAstronomyClient.world.method_23787(tickDelta) * (1.0f - SpyglassAstronomyClient.world.getRainGradient(tickDelta));
+    public void Render(MatrixStack matrices, Matrix4f projectionMatrix, float tickDelta) {
+        starVisibility = starsAlwaysVisible ? 1 : SpyglassAstronomyClient.world.getStarBrightness(tickDelta) * (1.0f - SpyglassAstronomyClient.world.getRainGradient(tickDelta));
         if (starVisibility > 0) {
             matrices.pop();
             matrices.push();
@@ -238,8 +237,6 @@ public class SpaceRenderingManager {
                 planetsBuffer.draw(matrices.peek().getPositionMatrix(), projectionMatrix, GameRenderer.getPositionColorProgram());
                 VertexBuffer.unbind();
             }
-
-            runnable.run();
         }
     }
 

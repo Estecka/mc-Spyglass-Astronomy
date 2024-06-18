@@ -1,5 +1,7 @@
 package com.nettakrim.spyglass_astronomy.mixin;
 
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.nettakrim.spyglass_astronomy.SpaceRenderingManager;
 import com.nettakrim.spyglass_astronomy.SpyglassAstronomyClient;
 
@@ -12,7 +14,6 @@ import org.joml.Matrix4f;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,22 +22,20 @@ import org.spongepowered.asm.mixin.Shadow;
 public class WorldRendererMixin {
     @Shadow private int ticks;
 
-	@Redirect(
-        method = "renderSky(Lnet/minecraft/client/util/math/MatrixStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V",
+	@WrapWithCondition(
+        method = "renderSky(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V",
         at = @At(value = "INVOKE", ordinal = 1, target="Lnet/minecraft/client/gl/VertexBuffer;draw(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/gl/ShaderProgram;)V")
     )
-	private void stopStarRender(VertexBuffer buffer, Matrix4f positionMatrix, Matrix4f projectionMatrix, ShaderProgram positionShader) {
-        if (SpaceRenderingManager.oldStarsVisible) {
-            buffer.draw(positionMatrix, projectionMatrix, positionShader);
-        }
+	private boolean stopStarRender(VertexBuffer buffer, Matrix4f positionMatrix, Matrix4f projectionMatrix, ShaderProgram positionShader) {
+        return SpaceRenderingManager.oldStarsVisible;
     }
 
     @Inject(
-        method = "renderSky(Lnet/minecraft/client/util/math/MatrixStack;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V",
+        method = "renderSky(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;FLnet/minecraft/client/render/Camera;ZLjava/lang/Runnable;)V",
         at = @At(value = "INVOKE", ordinal = 4, target="Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V")
     )
-    public void renderSky(MatrixStack matrices, Matrix4f projectionMatrix, float tickDelta, Camera camera, boolean bl, Runnable runnable, CallbackInfo ci) {
-        SpyglassAstronomyClient.spaceRenderingManager.Render(matrices, projectionMatrix, tickDelta, camera, bl, runnable);
+    public void renderSky(Matrix4f matrix4f, Matrix4f projectionMatrix, float tickDelta, Camera camera, boolean thickFog, Runnable fogCallback, CallbackInfo ci, @Local MatrixStack matrices) {
+        SpyglassAstronomyClient.spaceRenderingManager.Render(matrices, projectionMatrix, tickDelta);
     }
 
     @Inject(at = @At("HEAD"), method = "tick")

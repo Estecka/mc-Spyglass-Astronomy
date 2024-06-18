@@ -259,7 +259,7 @@ public class SpaceDataManager {
         ServerInfo serverInfo = SpyglassAstronomyClient.client.getCurrentServerEntry();
         if (serverInfo != null) {
             if (serverInfo.isRealm()) {
-                return "realms";
+                return serverInfo.name;
             }
             return serverInfo.address.replace(':', '_');
         }
