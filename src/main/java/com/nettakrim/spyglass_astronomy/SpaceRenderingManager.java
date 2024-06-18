@@ -28,17 +28,13 @@ import java.util.Scanner;
 
 public class SpaceRenderingManager {
     private final VertexBuffer starsBuffer = new VertexBuffer(Usage.STATIC);
-    private final BufferBuilder starBufferBuilder = Tessellator.getInstance().getBuffer();
 
     private final VertexBuffer constellationsBuffer = new VertexBuffer(Usage.STATIC);
-    private final BufferBuilder constellationsBufferBuilder = Tessellator.getInstance().getBuffer();
     private boolean constellationsNeedsUpdate = true;
 
     private final VertexBuffer drawingConstellationsBuffer = new VertexBuffer(Usage.STATIC);
-    private final BufferBuilder drawingConstellationsBufferBuilder = Tessellator.getInstance().getBuffer();
 
     private final VertexBuffer planetsBuffer = new VertexBuffer(Usage.STATIC);
-    private final BufferBuilder planetsBufferBuilder = Tessellator.getInstance().getBuffer();
 
     private static float heightScale = 1;
 
@@ -149,7 +145,7 @@ public class SpaceRenderingManager {
     }
 
     private void updateConstellations() {
-        constellationsBufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        BufferBuilder constellationsBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (Constellation constellation : SpyglassAstronomyClient.constellations) {
             constellation.setVertices(constellationsBufferBuilder, false);
@@ -160,7 +156,7 @@ public class SpaceRenderingManager {
     }
 
     private void updateStars(int ticks) {
-        starBufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        BufferBuilder starBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (Star star : SpyglassAstronomyClient.stars) {
             star.update(ticks);
@@ -172,7 +168,7 @@ public class SpaceRenderingManager {
     }
 
     private void updateOrbits(int ticks) {
-        planetsBufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        BufferBuilder planetsBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         Long day = SpyglassAstronomyClient.getDay();
         float dayFraction = SpyglassAstronomyClient.getDayFraction();
@@ -183,7 +179,7 @@ public class SpaceRenderingManager {
 
         for (OrbitingBody orbitingBody : SpyglassAstronomyClient.orbitingBodies) {
             orbitingBody.update(ticks, referencePosition, normalisedReferencePosition, day, dayFraction);
-            orbitingBody.setVertices(constellationsBufferBuilder);
+            orbitingBody.setVertices(planetsBufferBuilder);
         }
 
         planetsBuffer.bind();
@@ -191,7 +187,7 @@ public class SpaceRenderingManager {
     }
 
     private void updateDrawingConstellation() {
-        drawingConstellationsBufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        BufferBuilder drawingConstellationsBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         SpyglassAstronomyClient.drawingConstellation.setVertices(drawingConstellationsBufferBuilder, true);
 
