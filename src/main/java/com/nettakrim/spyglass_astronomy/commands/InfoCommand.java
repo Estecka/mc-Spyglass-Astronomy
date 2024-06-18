@@ -237,6 +237,7 @@ public class InfoCommand implements Command<FabricClientCommandSource> {
             pos.rotate(RotationAxis.POSITIVE_X.rotationDegrees(SpyglassAstronomyClient.starAngleMultiplier*(0.75f/SpyglassAstronomyClient.earthOrbit.period)));
             pos.rotate(RotationAxis.POSITIVE_Y.rotationDegrees(-90.0f));
             if (MathHelper.abs(pos.z) < 0.9f) {
+                //some of the values may be slightly innacurate (eg off by one) with fractional periods
                 float referenceYaw = (float)(Math.atan2(pos.x, pos.z)*-180d/Math.PI);
                 angle = (float)(Math.atan2(Math.sqrt(pos.x * pos.x + pos.z * pos.z), pos.y)*180d/Math.PI)-90;
                 if (referenceYaw < 0) angle = 180 - angle;
@@ -247,8 +248,8 @@ public class InfoCommand implements Command<FabricClientCommandSource> {
                 if (period == 8) {
                     text.append(translate("visibility.time.moonphase")).append(translate("moonphase."+ nearestDay));
                 } else {
-                    int inDays = nearestDay - ((int)(SpyglassAstronomyClient.getDay()%((long)period)));
-                    if (inDays < 0) inDays += 8;
+                    int inDays = nearestDay - (int)Math.round(SpyglassAstronomyClient.getDay()%(double)period);
+                    if (inDays < 0) inDays += (int)period;
                     text.append(translate("visibility.time.date", nearestDay, inDays));
                 }
             } else {
