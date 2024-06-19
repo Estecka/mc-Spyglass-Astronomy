@@ -3,13 +3,8 @@ package com.nettakrim.spyglass_astronomy;
 import net.minecraft.client.gl.VertexBuffer;
 import net.minecraft.client.gl.VertexBuffer.Usage;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.*;
 
-import net.minecraft.client.render.BackgroundRenderer;
-import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
@@ -28,13 +23,16 @@ import java.util.Scanner;
 
 public class SpaceRenderingManager {
     private final VertexBuffer starsBuffer = new VertexBuffer(Usage.STATIC);
+    private boolean starsReady = false;
 
     private final VertexBuffer constellationsBuffer = new VertexBuffer(Usage.STATIC);
-    private boolean constellationsNeedsUpdate = true;
+    private boolean constellationsReady = false;
 
     private final VertexBuffer drawingConstellationsBuffer = new VertexBuffer(Usage.STATIC);
+    private boolean drawingReady = false;
 
     private final VertexBuffer planetsBuffer = new VertexBuffer(Usage.STATIC);
+    private boolean planetsReady = false;
 
     private static float heightScale = 1;
 
@@ -45,6 +43,8 @@ public class SpaceRenderingManager {
     public static boolean starsAlwaysVisible;
 
     private float starVisibility;
+
+    private boolean constellationsNeedsUpdate = true;
 
     private File data = null;
     private Path storagePath;
@@ -144,7 +144,18 @@ public class SpaceRenderingManager {
         constellationsNeedsUpdate = true;
     }
 
+    public void cancelDrawing() {
+        drawingReady = false;
+    }
+
     private void updateConstellations() {
+        drawingReady = SpyglassAstronomyClient.isDrawingConstellation;
+
+        if (SpyglassAstronomyClient.constellations.isEmpty()) {
+            constellationsReady = false;
+            return;
+        }
+
         BufferBuilder constellationsBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (Constellation constellation : SpyglassAstronomyClient.constellations) {
@@ -153,9 +164,15 @@ public class SpaceRenderingManager {
 
         constellationsBuffer.bind();
         constellationsBuffer.upload(constellationsBufferBuilder.end());
+        constellationsReady = true;
     }
 
     private void updateStars(int ticks) {
+        if (SpyglassAstronomyClient.stars.isEmpty()) {
+            starsReady = false;
+            return;
+        }
+
         BufferBuilder starBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         for (Star star : SpyglassAstronomyClient.stars) {
@@ -165,9 +182,15 @@ public class SpaceRenderingManager {
 
         starsBuffer.bind();
         starsBuffer.upload(starBufferBuilder.end());
+        starsReady = true;
     }
 
     private void updateOrbits(int ticks) {
+        if (SpyglassAstronomyClient.orbitingBodies.isEmpty()) {
+            orbitingBodiesVisible = false;
+            return;
+        }
+
         BufferBuilder planetsBufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
         Long day = SpyglassAstronomyClient.getDay();
@@ -184,6 +207,7 @@ public class SpaceRenderingManager {
 
         planetsBuffer.bind();
         planetsBuffer.upload(planetsBufferBuilder.end());
+        planetsReady = true;
     }
 
     private void updateDrawingConstellation() {
@@ -207,24 +231,26 @@ public class SpaceRenderingManager {
             RenderSystem.setShaderColor(colorScale, colorScale, colorScale, starVisibility);
             BackgroundRenderer.clearFog();
             
-            if (starsVisible) {
+            if (starsVisible && starsReady) {
                 starsBuffer.bind();
                 starsBuffer.draw(matrices.peek().getPositionMatrix(), projectionMatrix, GameRenderer.getPositionColorProgram());
                 VertexBuffer.unbind();
             }
 
             if (constellationsVisible) {
-                constellationsBuffer.bind();
-                constellationsBuffer.draw(matrices.peek().getPositionMatrix(), projectionMatrix, GameRenderer.getPositionColorProgram());
-                VertexBuffer.unbind();
-                if (SpyglassAstronomyClient.isDrawingConstellation) {
+                if (constellationsReady) {
+                    constellationsBuffer.bind();
+                    constellationsBuffer.draw(matrices.peek().getPositionMatrix(), projectionMatrix, GameRenderer.getPositionColorProgram());
+                    VertexBuffer.unbind();
+                }
+                if (SpyglassAstronomyClient.isDrawingConstellation || drawingReady) {
                     updateDrawingConstellation();
                     drawingConstellationsBuffer.bind();
                     drawingConstellationsBuffer.draw(matrices.peek().getPositionMatrix(), projectionMatrix, GameRenderer.getPositionColorProgram());
                 }
             }
 
-            if (orbitingBodiesVisible) {
+            if (orbitingBodiesVisible && planetsReady) {
                 matrices.pop();
                 matrices.push();
                 matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(SpyglassAstronomyClient.getPositionInOrbit(360f)*(1-1/SpyglassAstronomyClient.earthOrbit.period)+180));

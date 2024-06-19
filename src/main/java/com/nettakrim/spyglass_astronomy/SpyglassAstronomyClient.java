@@ -526,6 +526,7 @@ public class SpyglassAstronomyClient implements ClientModInitializer {
         Star star = getNearestStar(lookVector.x, lookVector.y, lookVector.z);
 
         if(star == null || !drawingLine.finishDrawing(star)) {
+            spaceRenderingManager.cancelDrawing();
             return;
         }
 
@@ -562,7 +563,7 @@ public class SpyglassAstronomyClient implements ClientModInitializer {
                     if (sayFeedback) say("constellation.split", target.name);
                     constellations.add(potentialNew);
                 }
-                if (target.getLines().size() == 0) {
+                if (target.getLines().isEmpty()) {
                     if (sayFeedback) say("constellation.remove", target.name);
                     constellations.remove(target);
                 }
@@ -586,6 +587,9 @@ public class SpyglassAstronomyClient implements ClientModInitializer {
     }
 
     public static Vector3f getLookVector() {
+        if (client.player == null) {
+            return new Vector3f(0,0,1);
+        }
         float pitch = client.player.getPitch() / 180 * MathHelper.PI;
         float yaw = client.player.getYaw() / 180 * MathHelper.PI;
         float x = -MathHelper.sin(yaw);
@@ -695,6 +699,7 @@ public class SpyglassAstronomyClient implements ClientModInitializer {
     }
 
     private static void say(Text text) {
+        if (client.player == null) return;
         client.player.sendMessage(text);
     }
 
@@ -707,10 +712,11 @@ public class SpyglassAstronomyClient implements ClientModInitializer {
     }
 
     public static void longSay(Text text) {
-        client.player.sendMessage(Text.translatable(MODID+".longsay").setStyle(Style.EMPTY.withColor(nameTextColor)).append(text));
+        say(Text.translatable(MODID+".longsay").setStyle(Style.EMPTY.withColor(nameTextColor)).append(text));
     }
 
     public static void sayActionBar(String key, Object... args) {
+        if (client.player == null) return;
         client.player.sendMessage(Text.translatable(MODID+"."+key, args), true);
     }
 
