@@ -31,6 +31,7 @@ public class SpaceDataManager {
     private final File data;
     private final Path storagePath;
     private final String fileName;
+    private final boolean isWorldFolder;
 
     public ArrayList<StarData> starDatas;
     public ArrayList<OrbitingBodyData> orbitingBodyDatas;
@@ -41,11 +42,14 @@ public class SpaceDataManager {
         //https://github.com/Johni0702/bobby/blob/d2024a2d63c63d0bccf2eafcab17dd7bf9d26710/src/main/java/de/johni0702/minecraft/bobby/FakeChunkManager.java#L86
         long seedHash = ((BiomeAccessAccessor) world.getBiomeAccess()).getSeed();
         boolean useDefault = true;
-        storagePath = getLocalStorage().orElse(getGlobalStorage());
+        Optional<Path> localPath = getLocalStorage();
+        this.isWorldFolder = localPath.isPresent();
+        storagePath = localPath.orElse(getGlobalStorage());
 
         fileName = storagePath +"/"+seedHash + ".txt";
-
         data = new File(fileName);
+
+        tryMigrateOldData();
         if (data.exists()) {
             useDefault = !loadData();
         }
@@ -74,6 +78,23 @@ public class SpaceDataManager {
                 .resolve("data")
                 .resolve("spyglass_astronomy")
         );
+    }
+
+    public void tryMigrateOldData() {
+        if (this.isWorldFolder && !data.exists())
+        {
+            Path oldFile = getGlobalStorage().resolve(data.getName());
+            if (Files.exists(oldFile)) {
+                try {
+                    Files.createDirectories(storagePath);
+                    Files.copy(oldFile, data.toPath());
+                    SpyglassAstronomyClient.LOGGER.info("Migrated old astronomy data into the world's folder.");
+                }
+                catch (IOException e){
+                    SpyglassAstronomyClient.LOGGER.error("Failed to migrate old data: {}", e);
+                }
+            }
+        }
     }
 
     public boolean loadData() {
