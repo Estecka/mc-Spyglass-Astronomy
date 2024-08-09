@@ -28,8 +28,8 @@ public class SpaceDataManager {
     private long planetSeed;
     private float yearLength;
 
-    private File data = null;
-    private Path storagePath;
+    private final File data;
+    private final Path storagePath;
     private final String fileName;
 
     public ArrayList<StarData> starDatas;
@@ -45,11 +45,9 @@ public class SpaceDataManager {
 
         fileName = storagePath +"/"+seedHash + ".txt";
 
-        if (Files.exists(storagePath)) {
-            data = new File(fileName);
-            if (data.exists()) {
-                useDefault = !loadData();
-            }
+        data = new File(fileName);
+        if (data.exists()) {
+            useDefault = !loadData();
         }
 
         if (useDefault) {
@@ -149,9 +147,8 @@ public class SpaceDataManager {
     public void saveData() {
         if (changesMade == 0) return;
         try {
-            if (data == null) {
+            if (!data.exists()) {
                 Files.createDirectories(storagePath);
-                data = new File(fileName);
             }
             FileWriter writer = new FileWriter(data);
             StringBuilder s = new StringBuilder("Spyglass Astronomy - Format: "+SAVE_FORMAT);
