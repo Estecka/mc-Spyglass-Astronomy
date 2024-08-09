@@ -8,15 +8,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
 
 import com.nettakrim.spyglass_astronomy.mixin.BiomeAccessAccessor;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.server.integrated.IntegratedServer;
+import net.minecraft.util.WorldSavePath;
 
 public class SpaceDataManager {
     public static final int SAVE_FORMAT = 1;
@@ -38,10 +41,7 @@ public class SpaceDataManager {
         //https://github.com/Johni0702/bobby/blob/d2024a2d63c63d0bccf2eafcab17dd7bf9d26710/src/main/java/de/johni0702/minecraft/bobby/FakeChunkManager.java#L86
         long seedHash = ((BiomeAccessAccessor) world.getBiomeAccess()).getSeed();
         boolean useDefault = true;
-        storagePath = SpyglassAstronomyClient.client.runDirectory
-                .toPath()
-                .resolve(".spyglass_astronomy")
-                .resolve(getCurrentWorldOrServerName().replaceAll("[\\\\/:*?\"<>|]", "_"));
+        storagePath = getLocalStorage().orElse(getGlobalStorage());
 
         fileName = storagePath +"/"+seedHash + ".txt";
 
@@ -57,6 +57,25 @@ public class SpaceDataManager {
             planetSeed = seedHash;
             yearLength = 8f;
         }
+    }
+
+    static public Path getGlobalStorage(){
+        return SpyglassAstronomyClient.client.runDirectory.toPath()
+            .resolve(".spyglass_astronomy")
+            .resolve(getCurrentWorldOrServerName().replaceAll("[\\\\/:*?\"<>|]", "_"))
+            ;
+    }
+
+    static public Optional<Path> getLocalStorage(){
+        IntegratedServer localServer = MinecraftClient.getInstance().getServer();
+        if (localServer == null)
+            return Optional.empty();
+
+        return Optional.of(
+            localServer.getSavePath(WorldSavePath.ROOT)
+                .resolve("data")
+                .resolve("spyglass_astronomy")
+        );
     }
 
     public boolean loadData() {
